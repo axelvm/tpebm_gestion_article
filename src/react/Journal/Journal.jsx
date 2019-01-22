@@ -21,7 +21,7 @@ export default class Journal extends React.Component{
 
     componentDidMount() {
 
-        fetch('http://127.0.0.1:5000/article')
+        fetch('/article')
             .then(res => {
                 return res.json()
             })
@@ -62,7 +62,7 @@ export default class Journal extends React.Component{
 
         this.setState({articles: copyArticle})
 
-        fetch('http://127.0.0.1:5000/article', {
+        fetch('/article', {
             method: 'DELETE',
             headers: {
                 Accept: 'application/json',
@@ -90,14 +90,14 @@ export default class Journal extends React.Component{
         this.setState({articles: copyArticle})
 
 
-        fetch('http://127.0.0.1:5000/article', {
+        fetch('/article', {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "titre": title,
+                "title": title,
                 "article": "[]",
             }),
         }).then(res => {
@@ -144,7 +144,7 @@ export default class Journal extends React.Component{
             newArticle: {id: article.id, title: article.title, contents : copyContents},
         })
 
-        fetch('http://127.0.0.1:5000/article', {
+        fetch('/article', {
             method: 'PUT',
             headers: {
                 Accept: 'application/json',
@@ -152,7 +152,7 @@ export default class Journal extends React.Component{
             },
             body: JSON.stringify({
                 "id": this.state.newArticle.id,
-                "titre": this.state.newArticle.title,
+                "title": this.state.newArticle.title,
                 "article": this.state.newArticle.contents,
             }),
         }).then(res => {
@@ -174,7 +174,7 @@ export default class Journal extends React.Component{
             console.log("article to show : ",this.state.articles)
         })
 
-        fetch('http://127.0.0.1:5000/article?id='+article.id, {
+        fetch('/article?id='+article.id, {
             method: 'GET',
             headers: {
                 Accept: 'application/json',
@@ -207,7 +207,7 @@ export default class Journal extends React.Component{
         this.setState({
             contents: arrayMove(sortingContents, oldIndex, newIndex),
         }, () => {
-            fetch('http://127.0.0.1:5000/article?id='+article.id, {
+            fetch('/article?id='+article.id, {
                 method: 'PUT',
                 headers: {
                     Accept: 'application/json',
@@ -233,7 +233,7 @@ export default class Journal extends React.Component{
              * TO DO : gérer le CORS et ajouter le PUT en BDD pour que le DELETE soit effectif
              */
             this.setState({contents: copyContents}, () =>{
-                fetch('http://127.0.0.1:5000/article', {
+                fetch('/article', {
                     method: 'PUT',
                     headers: {
                         Accept: 'application/json',
