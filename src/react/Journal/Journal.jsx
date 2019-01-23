@@ -84,6 +84,7 @@ export default class Journal extends React.Component{
 
         let copyNewArticle = Object.assign(this.state.newArticle)
         copyNewArticle.title = title
+        console.log("title to add", copyNewArticle.title)
         let copyArticle = [...this.state.articles]
         copyArticle.push(copyNewArticle)
 

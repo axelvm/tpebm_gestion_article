@@ -2,7 +2,7 @@ import React from 'react';
 
 export default class InputArticle extends React.Component {
 
-    state = {nextitle : "",}
+    state = {newtitle : "",}
 
 
     render(){
@@ -15,7 +15,7 @@ export default class InputArticle extends React.Component {
     }
 
     updateNewTitle = (e) => {
-        this.setState({newtitle: (e.target).value})
+        this.setState({newtitle: (e.target).value},() => {console.log(this.state.newtitle)})
     }
 
     enterArticle = (e) => {
@@ -28,7 +28,7 @@ export default class InputArticle extends React.Component {
     }
 
     addArticle = () => {
-        this.props.addArticle(this.state.newArticle)
+        this.props.addArticle(this.state.newtitle)
     }
 
 }
