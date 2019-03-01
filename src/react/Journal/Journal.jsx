@@ -3,7 +3,7 @@ import ArticleItem from '../ArticleItem/ArticleItem'
 import InputArticle from '../InputArticle/InputArticle'
 import InputParagraphe from '../InputParagraphe/InputParagraphe'
 import HeaderTitle from "../HeaderTitle/HeaderTitle";
-import {arrayMove} from "react-sortable-hoc";
+
 
 
 
@@ -13,15 +13,15 @@ export default class Journal extends React.Component{
     state = {
         articles: [],
         newtitle: "",
-        newArticle: {id: 0, title: "", contents: []},
+        newArticle: {id: 0, title: "", contents: ""},
         access: 0,
-        contents: [],
+        contents: "",
         newContent: "",
     };
 
     componentDidMount() {
 
-        fetch('/article')
+        fetch('http://127.0.0.1:5000/article')
             .then(res => {
                 return res.json()
             })
@@ -33,19 +33,20 @@ export default class Journal extends React.Component{
 
     render() {
         return <section className="articleapp">
-            <div data-reactid=".0">
-                <header className="header" data-reactid=".0.0">
+            <div>
+                <header className="header">
                     <HeaderTitle access={this.state.access} articles={this.state.articles}/>
-                    <button className="add" data-reactid=".0.0.2"/>
+                    <button className="add"/>
                     {this.setInput()}
                 </header>
-                <section className="main" data-reactid=".0.1">
-                    <ul className="article-list" data-reactid=".0.1.2">
-                        {this.state.articles.map(article => {
+                <section className="main">
+                    <ul className="article-list">
+                      {
+                          this.state.articles.map(article => {
                             return <ArticleItem article={article} key={article.id} onDestroy={this.removeArticle}
                                                  access={this.showArticle} accessRender={this.state.access}
                                                  contents={this.state.contents} articles={this.state.articles}
-                                                 onSortEnd={this.onSortEnd} removePara={this.removePara} />
+                                                 removePara={this.removePara} />
                         })}
                     </ul>
                 </section>
@@ -55,6 +56,64 @@ export default class Journal extends React.Component{
     }
 
 
+    //usefull function
+
+    nextId = (articles) =>{
+        let idMax = 0
+        articles.map(article => {
+            if (idMax < article.id ) {
+              idMax = article.id
+            }
+            return null;
+        })
+        return idMax + 1;
+    }
+
+  setInput = () => {
+    console.log("access : ", this.state.access)
+    if (this.state.access === 0) {
+      return (
+        <InputArticle addArticle={this.addArticle}/>
+      )
+    }
+
+    return this.state.articles.map(article =>
+    {
+      return (
+        <div>
+          <InputParagraphe article={article} addParagraphe={this.addParagraphe} backToJournal={this.backToJournal}/>
+        </div>
+      )
+    })
+  }
+
+  backToJournal = () => {
+    this.setState({access: 0}, () => {
+      fetch('http://127.0.0.1:5000/article')
+        .then(res => {
+          return res.json()
+        })
+        .then((data) => {
+          this.setState({articles: data.result})
+        })
+    })
+  }
+
+  setContent = (content) => {
+    console.log("content",content)
+    let output = ""
+    for(var i = 0; i<content.length; i++){
+      output = output.concat(content[i])
+      if(i !== content.length-1){
+        output= output.concat("],[")
+      }
+    }
+    return output
+  }
+
+
+    //API functions
+
     removeArticle = (article) => {
         console.log("article à supprimer : ", article.id)
         let copyArticle = [...this.state.articles]
@@ -62,7 +121,7 @@ export default class Journal extends React.Component{
 
         this.setState({articles: copyArticle})
 
-        fetch('/article', {
+        fetch('http://127.0.0.1:5000/article', {
             method: 'DELETE',
             headers: {
                 Accept: 'application/json',
@@ -79,27 +138,28 @@ export default class Journal extends React.Component{
             });
     }
 
+
+
     addArticle = (title) => {
-
-
         let copyNewArticle = Object.assign(this.state.newArticle)
         copyNewArticle.title = title
-        console.log("title to add", copyNewArticle.title)
+        let idNewArticle = this.nextId(this.state.articles)
+        copyNewArticle.id = idNewArticle
         let copyArticle = [...this.state.articles]
         copyArticle.push(copyNewArticle)
 
         this.setState({articles: copyArticle})
 
 
-        fetch('/article', {
+        fetch('http://127.0.0.1:5000/article', {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "title": title,
-                "article": "[]",
+                "titre": title,
+                "article": "",
             }),
         }).then(res => {
             console.log(res)
@@ -111,71 +171,15 @@ export default class Journal extends React.Component{
     };
 
 
-    setInput = () => {
-        console.log("access : ", this.state.access)
-        if (this.state.access === 0) {
-            return (
-                <InputArticle addArticle={this.addArticle}/>
-            )
-        }
-
-        return this.state.articles.map(article =>
-        {
-            console.log("yolo", article)
-            return (
-                <InputParagraphe article={article} addParagraphe={this.addParagraphe}/>
-            )
-        })
-
-
-
-
-    }
-
-
-
-
-    addParagraphe = (newContent, article) => {
-
-        let copyContents = [...this.state.contents]
-        copyContents.push(newContent)
-
-
-        this.setState({
-            newArticle: {id: article.id, title: article.title, contents : copyContents},
-        })
-
-        fetch('/article', {
-            method: 'PUT',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "id": this.state.newArticle.id,
-                "title": this.state.newArticle.title,
-                "article": this.state.newArticle.contents,
-            }),
-        }).then(res => {
-            return res.json()
-        })
-            .catch((error) => {
-                console.error(error);
-            });
-    }
-
-
 
     showArticle = (article) => {
 
         let articleToShow = [];
         articleToShow.push(article);
 
-        this.setState({articles: articleToShow}, () => {
-            console.log("article to show : ",this.state.articles)
-        })
+        this.setState({articles: articleToShow})
 
-        fetch('/article?id='+article.id, {
+        fetch('http://127.0.0.1:5000/article?id='+article.id, {
             method: 'GET',
             headers: {
                 Accept: 'application/json',
@@ -185,74 +189,94 @@ export default class Journal extends React.Component{
         }).then(res => {
             return res.json()
         }).then((data) => {
-            console.log("data result ", data.result)
             this.setState({
                 articles: data.result,
                 access: article.id,
-                contents: data.result.article,
             }, () => {
                 this.state.articles.map(article => {
                     this.setState({
-                        contents: JSON.parse(article.article)
+                        contents: article.article
                     })
+                  return null;
                 })
-                console.log("articles shown ", this.state.articles)
             })
         })
 
     }
 
-    onSortEnd = ({oldIndex, newIndex}, article) => {
+  addParagraphe = (newContent, article) => {
+    console.log("conntennnts",article.article)
 
-        let sortingContents = this.state.contents
-        this.setState({
-            contents: arrayMove(sortingContents, oldIndex, newIndex),
-        }, () => {
-            fetch('/article?id='+article.id, {
-                method: 'PUT',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    "id": article.id,
-                    "title": article.title,
-                    "article": this.state.contents,
-                })
-            }).then(res => {
-                return res.json()
-            })
-        })};
+    let copyContents = article.article.concat("],[")
+    let contentToAdd = copyContents.concat(newContent)
 
-        removePara = (index, article) => {
-            console.log("index removing", index)
-            let copyContents = [...this.state.contents]
-            copyContents = copyContents.filter(t => t !== index);
+    console.log("state contents", contentToAdd)
+
+    this.setState({newArticle: {id: article.id, title: article.title, contents : contentToAdd}}
+      , () => {
+        fetch('http://127.0.0.1:5000/article', {
+          method: 'PUT',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            "id": this.state.newArticle.id,
+            "titre": this.state.newArticle.title,
+            "article":this.state.newArticle.contents,
+          }),
+        }).then(res => {
+          this.showArticle(article)
+          return res.json()
+
+        })
+          .catch((error) => {
+            console.error(error);
+          });
+      })
 
 
-            /**
-             * TO DO : gérer le CORS et ajouter le PUT en BDD pour que le DELETE soit effectif
-             */
-            this.setState({contents: copyContents}, () =>{
-                fetch('/article', {
-                    method: 'PUT',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        "id": article.id,
-                        "titre": article.title,
-                        "article": this.state.contents,
-                    }),
-                }).then(res => {
-                    return res.json()
-                })
-                    .catch((error) => {
-                        console.error(error);
-                    });
-            })
 
-        }
+  }
+  removePara = (index, article) => {
+    let tableitems = article.article.split("],[")
+    let itemtoremove = tableitems[index]
+    let newtableitems = tableitems.filter(t => t !== itemtoremove)
+
+    let newContent = this.setContent(newtableitems)
+    console.log("newcontent", newContent)
+
+    this.setState({newArticle: {id: article.id, title: article.title, contents : newContent}}
+      , () => {
+
+        fetch('http://127.0.0.1:5000/article', {
+          method: 'PUT',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            "id": this.state.newArticle.id,
+            "titre": this.state.newArticle.title,
+            "article":this.state.newArticle.contents,
+          }),
+        }).then(res => {
+          this.showArticle(article)
+          return res.json()
+
+        })
+          .catch((error) => {
+            console.error(error);
+          });
+      })
+
+  }
+
+
+
+
+
+
+
 
 }

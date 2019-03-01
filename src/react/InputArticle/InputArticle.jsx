@@ -22,12 +22,15 @@ export default class InputArticle extends React.Component {
         if(e.key === 'Enter'){
             if(this.state.newtitle !== "") {
                 this.addArticle()
-                this.setState({newtitle: ""})
+                this.setState({newtitle: ""},
+                    console.log("nouveau titre 2", this.state.newtitle))
+
             }
         }
     }
 
     addArticle = () => {
+        console.log("nouveau titre ", this.state.newtitle)
         this.props.addArticle(this.state.newtitle)
     }
 
